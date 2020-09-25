@@ -16,10 +16,25 @@ end
 # Make sure that one string (regexp) occurs before or after another one
 #   on the same page
 
+When /^(?:|I )follow "(.*)$"/ do |sort_option|
+  case sort_option
+  when "Movie Title"
+    click_on("title_header")
+  when "Release Date"
+    click_on("release_date_header")  
+  end
+end
+
 Then /I should see "(.*)" before "(.*)"/ do |e1, e2|
   #  ensure that that e1 occurs before e2.
   #  page.body is the entire content of the page as a string.
-  fail "Unimplemented"
+  # fail "Unimplemented"
+  if page.respond_to? :should
+  expect(page.body =~/#{e1}.*#{e2}/m).to be >= 0
+  else
+    # I can find one piece of text matchingh following pattern with characteristrcs that e1 is before e2
+    assert page.body =~ /#{e1}.*#{e2}/m
+  end
 end
 
 When /^I press "(.*)" button/ do |button|
@@ -35,8 +50,6 @@ Then /I should (not )?see the following movies: (.*)$/ do |not_present, movies_l
     end
   end
 end
-
-
 
 
 
@@ -62,13 +75,10 @@ end
 Then /I should see all the movies/ do
   # Make sure that all the movies in the app are visible in the table
   #fail "Unimplemented"
-  movies = Movie.all
-  if movies.length == 10
-    movies.each do |movie|
-      page.body =~ /#{movie.title}/m
-    end
-  else
-    false
+  rows = page.all('#movies tr').size - 1
+  rows.should == Movie.count
+  Movie.all.each do |movie|
+    step %{I should see "#{movie.title}"}
   end
 end
 
